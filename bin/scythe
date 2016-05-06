@@ -75,10 +75,10 @@ unless Choice[:n]
   end
 end
 say "non interactive" if Choice[:n]
-  servers.each do |s|
-    say "Ok, its been great, RIP #{s.id}"
-    terminate_server_by_id(s.id, 'basho-builds')
-  end
+servers.each do |s|
+  say "Ok, its been great, RIP #{s.id}"
+  terminate_server_by_id(s.id, required_tag)
+end
 
 say "complete"
 
