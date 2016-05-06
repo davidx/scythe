@@ -1,0 +1,84 @@
+#!/usr/bin/env ruby
+
+$:.unshift(File.join(File.dirname(__FILE__),'/../lib'))
+require 'scythe'
+
+
+include Log4r
+
+mylogger=Scythe::LogMachine.new
+
+Choice.options do
+  header ''
+  header 'Specific options:'
+
+  option :age, :required => true do
+    short '-a'
+    long '--age=AGE'
+    desc 'Terminate instances older than max <age> (in seconds).'
+  end
+  option :tag, :required => true do
+    short '-t'
+    long '--tag=TAG'
+    desc 'Only terminate instances with <tag>'
+  end
+  option :n do
+    short '-n'
+    long '--noninteractive'
+    desc 'Non interactive. Dont prompt'
+    default false
+  end
+  separator ''
+  separator 'Common options: '
+
+  option :help do
+    long '--help'
+    desc 'Show this message'
+  end
+  option :debug do
+    short '-d'
+    long '--debug'
+    desc 'Show debug (verbose)'
+    action do
+      mylogger.level=Log4r::DEBUG
+    end
+  end
+end
+
+max_age=Choice[:age].to_i
+required_tag=Choice[:tag]
+
+include Fog
+
+unless Choice[:n]
+  say "reaping any instance with max age is #{max_age} seconds with required tag #{required_tag}"
+  if  ask("continue? y/n") == "y"
+    p "ok continue"
+    servers = Compute[:aws].servers
+    start_time=DateTime.now.strftime("%s").to_i
+    servers_to_be_reaped=[]
+
+    servers.each do |server|
+      next unless server.state == 'running'
+      server_created_time = server.created_at.strftime("%s").to_i
+      server_age = start_time - server_created_time
+   
+      if server_age > max_age && server.tags.include?(required_tag)
+        servers_to_be_reaped.push(server)
+      end
+    end
+    p "OK #{servers_to_be_reaped.length} servers to be terminated"
+    servers_to_be_reaped.each do |server|
+      p "Ok, its been great, RIP #{server.id}"
+      server.destroy
+    end
+  else
+    p "ok exit"
+    exit 1
+  end
+else
+  p "ok non interactive"
+
+end
+
+
