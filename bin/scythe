@@ -49,36 +49,38 @@ max_age=Choice[:age].to_i
 required_tag=Choice[:tag]
 
 include Fog
+include Scythe
+
+say "\t\t\t!!!   WARNING     !! \n"
+say "This program will TERMINATE any instance OLDER than #{max_age} SECONDS with required TAG '#{required_tag}'"
+
+servers = get_servers_for_termination(max_age, required_tag)
+
+say "#{servers.length} servers to be terminated\n"
+say "Servers:\n" unless servers.length == 0
+servers.each do |server|
+  server_age = DateTime.now.strftime("%s").to_i - server.created_at.strftime("%s").to_i
+  print "[#{server.id}][#{server.tags}][#{server_age} seconds]\n"
+end
+unless servers.length > 0
+  say "No servers match. Try again later."
+  exit 0
+end
 
 unless Choice[:n]
-  say "reaping any instance with max age is #{max_age} seconds with required tag #{required_tag}"
-  if  ask("continue? y/n") == "y"
-    p "ok continue"
-    servers = Compute[:aws].servers
-    start_time=DateTime.now.strftime("%s").to_i
-    servers_to_be_reaped=[]
 
-    servers.each do |server|
-      next unless server.state == 'running'
-      server_created_time = server.created_at.strftime("%s").to_i
-      server_age = start_time - server_created_time
-   
-      if server_age > max_age && server.tags.include?(required_tag)
-        servers_to_be_reaped.push(server)
-      end
-    end
-    p "OK #{servers_to_be_reaped.length} servers to be terminated"
-    servers_to_be_reaped.each do |server|
-      p "Ok, its been great, RIP #{server.id}"
-      server.destroy
-    end
-  else
-    p "ok exit"
+  unless (ask("Continue _Terminating_ above (#{servers.length}) servers? y/n") == "y")
+    say "exit safely"
     exit 1
   end
-else
-  p "ok non interactive"
-
 end
+say "non interactive" if Choice[:n]
+  servers.each do |s|
+    say "Ok, its been great, RIP #{s.id}"
+    terminate_server_by_id(s.id, 'basho-builds')
+  end
+
+say "complete"
+
 
 
