@@ -17,11 +17,6 @@ Choice.options do
     long '--age=AGE'
     desc 'Terminate instances older than max <age> (in seconds).'
   end
-  option :tag, :required => true do
-    short '-t'
-    long '--tag=TAG'
-    desc 'Only terminate instances with <tag>'
-  end
   option :n do
     short '-n'
     long '--noninteractive'
@@ -46,15 +41,14 @@ Choice.options do
 end
 
 max_age=Choice[:age].to_i
-required_tag=Choice[:tag]
 
 include Fog
 include Scythe
 
 say "\t\t\t!!!   WARNING     !! \n"
-say "This program will TERMINATE any instance OLDER than #{max_age} SECONDS with required TAG '#{required_tag}'"
+say "This program will TERMINATE any instance OLDER than #{max_age} SECONDS with required TAG ':build_id'"
 
-servers = get_servers_for_termination(max_age, required_tag)
+servers = get_servers_for_termination(max_age)
 
 say "#{servers.length} servers to be terminated\n"
 say "Servers:\n" unless servers.length == 0
@@ -77,7 +71,7 @@ end
 say "non interactive" if Choice[:n]
 servers.each do |s|
   say "Ok, its been great, RIP #{s.id}"
-  terminate_server_by_id(s.id, required_tag)
+  terminate_server_by_id(s.id)
 end
 
 say "complete"

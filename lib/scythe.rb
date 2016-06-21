@@ -17,11 +17,11 @@ module Scythe
       mylogger.level = Log4r::INFO
     end
   end
-  def terminate_server_by_id(id, required_tag)
+  def terminate_server_by_id(id)
     server=Compute[:aws].servers.get(id)
-    server.destroy if server.tags.key?(required_tag)
+    server.destroy if server.tags.include?("build_id")
   end
-  def get_servers_for_termination(max_age, required_tag)
+  def get_servers_for_termination(max_age)
     servers = Compute[:aws].servers
     start_time=DateTime.now.strftime("%s").to_i
     servers_to_be_reaped=[]
@@ -31,7 +31,7 @@ module Scythe
       server_created_time = server.created_at.strftime("%s").to_i
       server_age = start_time - server_created_time
 
-      if server_age > max_age && server.tags.include?(required_tag)
+      if server_age > max_age && server.tags.include?("build_id")
         servers_to_be_reaped.push(server)
       end
     end
