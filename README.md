@@ -2,6 +2,11 @@
 
 A Tool to trim the grass. Bids farewell to instances older than a set threshold.
 
+![Logo][logo]
+[logo]: http://vignette4.wikia.nocookie.net/scribblenauts/images/2/2f/Scythe_SnU.png/revision/latest?cb=20130118103149
+
+
+
 ## Installation
 
 Add this line to your application's Gemfile:
